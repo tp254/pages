@@ -4,7 +4,7 @@ permalink: /csp/fault-tolerance/p3/lessons/
 title: Fault Tolerance Lesson
 ---
 
-
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
