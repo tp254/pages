@@ -104,6 +104,21 @@ button.reset { background: #8ae8ff; color: #001018; }
   font-family: Menlo, Consolas, Monaco, monospace;
   font-size: 0.92rem;
 }
+.pill {
+  display: inline-block;
+  margin: 6px 8px 0 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(138, 232, 255, 0.14);
+  color: #c9f5ff;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.activity button.option {
+  width: auto;
+  min-width: 140px;
+  margin-right: 10px;
+}
 @media (max-width: 640px) {
   body { padding: 12px; }
   .wrap { padding: 18px; border-radius: 16px; }
@@ -151,6 +166,115 @@ button.reset { background: #8ae8ff; color: #001018; }
 else:
     keep serving users</pre>
       This shows redundancy because there is a backup path ready if the first one breaks.
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>More code examples</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="mini">Backup database</div>
+        <pre class="code">if primary_db is down:
+    connect to replica_db
+else:
+    use primary_db</pre>
+      </div>
+      <div class="card">
+        <div class="mini">Load balancer</div>
+        <pre class="code">if server_1 fails:
+    send traffic to server_2
+if server_2 fails:
+    send traffic to server_3</pre>
+      </div>
+      <div class="card">
+        <div class="mini">Cloud storage</div>
+        <pre class="code">if file copy A is lost:
+    restore from copy B
+else:
+    keep both copies synced</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Real-life examples</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="mini">Websites</div>
+        Big websites use multiple servers so one crash does not take everything down.
+      </div>
+      <div class="card">
+        <div class="mini">Phones</div>
+        Cell networks have extra towers and routes so calls can still connect during outages.
+      </div>
+      <div class="card">
+        <div class="mini">Schools</div>
+        Schools use backup Wi-Fi, backup power, and saved copies of files to avoid shutdowns.
+      </div>
+    </div>
+    <div class="box" style="margin-top: 12px;">
+      <span class="pill">Real world rule</span>
+      <span class="pill">Backup path</span>
+      <span class="pill">Still works</span>
+    </div>
+  </div>
+
+  <div class="section activity">
+    <h2>Interactive activity: build a backup plan</h2>
+    <div class="box">
+      Pick one option in each row. If every row has a backup, the system is fault tolerant.
+    </div>
+    <div class="grid" style="margin-top: 14px;">
+      <div class="card">
+        <strong>Power</strong>
+        <div class="mini">Choose a backup</div>
+        <button class="choice option" onclick="setPlan('power', true, this)">Backup battery</button>
+        <button class="choice option" onclick="setPlan('power', false, this)">One wall outlet only</button>
+      </div>
+      <div class="card">
+        <strong>Internet</strong>
+        <div class="mini">Choose a backup</div>
+        <button class="choice option" onclick="setPlan('internet', true, this)">Second internet provider</button>
+        <button class="choice option" onclick="setPlan('internet', false, this)">One cable line only</button>
+      </div>
+      <div class="card">
+        <strong>Data</strong>
+        <div class="mini">Choose a backup</div>
+        <button class="choice option" onclick="setPlan('data', true, this)">Cloud copy</button>
+        <button class="choice option" onclick="setPlan('data', false, this)">Single saved file</button>
+      </div>
+    </div>
+    <div id="planMsg" class="tip" style="margin-top: 12px;">Choose backups to see if the system can survive a failure.</div>
+    <div class="buttons" style="margin-top: 10px;">
+      <button class="reset" onclick="resetPlan()">Reset plan</button>
+    </div>
+  </div>
+
+  <div class="section activity">
+    <h2>Interactive activity: spot the weak link</h2>
+    <div class="box">
+      Click the part that would break the whole system if it failed. A fault-tolerant design should avoid this.
+    </div>
+    <div class="grid" style="margin-top: 14px;">
+      <div class="card">
+        <strong>System A</strong>
+        <div class="mini">Power, backup power, cloud copy</div>
+        <button class="choice option" onclick="spotWeakLink('A', false, this)">Choose this system</button>
+      </div>
+      <div class="card">
+        <strong>System B</strong>
+        <div class="mini">Power, one router, cloud copy</div>
+        <button class="choice option" onclick="spotWeakLink('B', true, this)">Choose this system</button>
+      </div>
+      <div class="card">
+        <strong>System C</strong>
+        <div class="mini">Power, backup router, cloud copy</div>
+        <button class="choice option" onclick="spotWeakLink('C', false, this)">Choose this system</button>
+      </div>
+    </div>
+    <div id="weakMsg" class="tip" style="margin-top: 12px;">Pick the system with the single point of failure.</div>
+    <div class="buttons" style="margin-top: 10px;">
+      <button class="reset" onclick="resetWeakLink()">Reset weak-link game</button>
     </div>
   </div>
 
@@ -259,6 +383,8 @@ else:
 <script>
 let score = 0;
 const solved = { quiz1: false, quiz2: false, quiz3: false, quiz4: false, quiz5: false, quiz6: false };
+const plan = { power: null, internet: null, data: null };
+let weakSolved = false;
 
 function fail(node) {
   document.getElementById(node).classList.add('off');
@@ -301,6 +427,60 @@ function resetGame() {
   document.getElementById('quizMsg').innerText = '';
   document.getElementById('score').innerText = 'Score: 0 / 3';
   document.querySelectorAll('.choice').forEach(function(button) {
+    button.classList.remove('correct', 'wrong');
+  });
+}
+
+function setPlan(part, isBackup, button) {
+  plan[part] = isBackup;
+  button.classList.add(isBackup ? 'correct' : 'wrong');
+
+  const safe = plan.power === true && plan.internet === true && plan.data === true;
+  const chosen = [
+    plan.power === null ? 'power' : null,
+    plan.internet === null ? 'internet' : null,
+    plan.data === null ? 'data' : null
+  ].filter(Boolean);
+
+  if (safe) {
+    document.getElementById('planMsg').innerText = 'Good. Every part has a backup, so the plan is fault tolerant.';
+  } else if (chosen.length > 0) {
+    document.getElementById('planMsg').innerText = 'Keep going. A fault-tolerant system needs backup choices for power, internet, and data.';
+  } else {
+    document.getElementById('planMsg').innerText = 'Check the plan. One weak spot can still break the system.';
+  }
+}
+
+function resetPlan() {
+  plan.power = null;
+  plan.internet = null;
+  plan.data = null;
+  document.getElementById('planMsg').innerText = 'Choose backups to see if the system can survive a failure.';
+  document.querySelectorAll('.activity .choice.option').forEach(function(button) {
+    button.classList.remove('correct', 'wrong');
+  });
+}
+
+function spotWeakLink(system, isCorrect, button) {
+  if (weakSolved) {
+    document.getElementById('weakMsg').innerText = 'You already found the weak link. Reset to try again.';
+    return;
+  }
+
+  if (isCorrect) {
+    weakSolved = true;
+    button.classList.add('correct');
+    document.getElementById('weakMsg').innerText = 'Correct. System B has one router, so it has a single point of failure.';
+  } else {
+    button.classList.add('wrong');
+    document.getElementById('weakMsg').innerText = 'Not quite. Look for the system with no backup path.';
+  }
+}
+
+function resetWeakLink() {
+  weakSolved = false;
+  document.getElementById('weakMsg').innerText = 'Pick the system with the single point of failure.';
+  document.querySelectorAll('.activity .choice.option').forEach(function(button) {
     button.classList.remove('correct', 'wrong');
   });
 }
